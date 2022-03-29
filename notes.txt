@@ -1,0 +1,51 @@
+Need to create methods that define rules on a node
+
+permissions: none, read, append (create), write (update), full (delete)
+whilelist: who these permissions pertain to
+by default, all nodes are fully private (none) unless their permissions are defined
+the creator will always have full permissions
+
+ex.
+Node extends GunNode {
+    permissions = [
+        {
+            level: 'read',
+            whitelist: '*'
+        }, // everybody can read from this node
+        {
+            level: 'write',
+            whitelist: ['asdf','qwer','zxcv']
+        }, // those 3 users can write
+        {
+            level: 'append',
+            whitelist: [
+                ...(await gun.get('some-path').get('members').map().yield()),
+                ...(await gun.get('some-path').get('special-guests').map().yield())
+            ]
+        } // everyone in 'members' and 'special-guests' can append
+    ]
+}
+
+each permission upserts the last so if a user was included in one permission declaration then another down the list, that later would would supersceed the first regardless if those permissions are elevated or lowered
+
+gun.user().permissions().put() // a way to mass upsert permissions, essentially the same as setting permissions per node but each permission would include a path ie.
+[
+    {
+        path: 'some/path/to/a/node',
+        level: 'read',
+        whitelist: '*'
+    },
+    {
+        path: 'some/path/to/a/node',
+        level: 'write',
+        whitelist: ['asdf','qwer','zxcv']
+    },
+    {
+        path: 'some/path/to/a/node',
+        level: 'append',
+        whitelist: [
+            ...(await gun.get('some-path').get('members').map().yield()),
+            ...(await gun.get('some-path').get('special-guests').map().yield())
+        ]
+    }
+]
